@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Proposal</title>
+<style>
+  * { box-sizing: border-box; font-family: 'Georgia', serif; margin: 0; padding: 0; }
+  body { 
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; 
+    background: #fdf5e6; overflow: hidden; 
+  }
+
+  /* LOWERED POSITION: Ensures letter stays on screen */
+  .container { position: relative; width: 320px; text-align: center; margin-top: 350px; }
+
+  .envelope-wrapper {
+    position: relative; width: 280px; height: 180px; background: #111;
+    border-radius: 0 0 10px 10px; margin: 0 auto; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6); z-index: 1;
+  }
+
+  /* LETTER: Tall base for your new messages */
+  .letter {
+    position: absolute; bottom: 5px; left: 10px; width: 260px; height: 160px; 
+    background: linear-gradient(135deg, #fffcf0, #e6d5a7); border-radius: 8px; 
+    padding: 15px; z-index: 2; border: 1px solid #d4af37;
+    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), height 1.2s ease;
+    display: flex; flex-direction: column; align-items: center; overflow: hidden;
+  }
+
+  /* FLAPS */
+  .side-flap { position: absolute; bottom: 0; width: 0; height: 0; z-index: 4; pointer-events: none; }
+  .left { left: 0; border-left: 140px solid #1a1a1a; border-top: 90px solid transparent; border-bottom: 90px solid transparent; }
+  .right { right: 0; border-right: 140px solid #1a1a1a; border-top: 90px solid transparent; border-bottom: 90px solid transparent; }
+  .pocket { position: absolute; bottom: 0; left: 0; border-left: 140px solid transparent; border-right: 140px solid transparent; border-bottom: 100px solid #111; z-index: 5; }
+  .flap { position: absolute; top: 0; left: 0; border-left: 140px solid transparent; border-right: 140px solid transparent; border-top: 100px solid #9b1d1d; transform-origin: top; transition: transform 0.6s ease; z-index: 6; }
+
+  /* OPEN STATE: Tall height to fit GIF and long text */
+  .envelope-wrapper.open .flap { transform: rotateX(180deg); z-index: 0; }
+  .envelope-wrapper.open .letter { 
+    transform: translateY(-100px); 
+    height: 440px; 
+    z-index: 10; 
+  }
+
+  /* LAYOUT ZONES: Prevent overlapping */
+  #header-zone { height: 100px; width: 100%; margin-bottom: 15px; display: flex; flex-direction: column; justify-content: center; }
+  #gif-zone { height: 130px; width: 100%; display: flex; align-items: center; justify-content: center; }
+  #gif { max-height: 110px; width: auto; border-radius: 8px; border: 1px solid #d4af37; display: none; }
+
+  .btn-zone { 
+    height: 80px; width: 100%; display: flex; 
+    align-items: center; justify-content: center; 
+    position: relative; gap: 15px;
+  }
+
+  #yes { 
+    background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728);
+    color: #3b2a10; padding: 10px 22px; border-radius: 20px; 
+    border: 1px solid #d4af37; font-weight: bold; cursor: pointer; 
+    z-index: 11; font-size: 14px; transition: all 0.3s ease;
+  }
+  
+  #no { 
+    background: #4a0000; color: white; padding: 8px 18px; border-radius: 20px; 
+    border: none; font-weight: bold; cursor: pointer; 
+    position: relative; z-index: 12; transition: all 0.3s ease;
+  }
+  
+  .controls { margin-top: 30px; display: flex; justify-content: center; gap: 10px; }
+  .controls button { 
+    padding: 8px 20px; border-radius: 20px; border: 1px solid #d4af37; 
+    background: #fff; cursor: pointer; font-weight: bold; color: #b38728;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="envelope-wrapper" id="env">
+    <div class="flap"></div>
+    <div class="side-flap left"></div>
+    <div class="side-flap right"></div>
+    
+    <div class="letter" id="letter">
+      <div id="header-zone">
+        <h3 style="color: #b38728; font-size: 16px;">To: Riya</h3>
+        <p style="font-size: 13px; font-style: italic; line-height: 1.3;">“I don't want to imagine a future where you aren't by my side. Will you do me the honor of being my Girlfriend?”</p>
+      </div>
+
+      <div id="gif-zone"><img id="gif"></div>
+      
+      <div class="btn-zone" id="btn-group">
+        <button id="yes" onclick="yesClick()">YES</button>
+        <button id="no" onclick="noClick()">NO</button>
+      </div>
+      
+      <div id="reaction" style="font-weight: bold; color: #6d4c41; line-height: 1.2; padding: 0 5px;"></div>
+    </div>
+    
+    <div class="pocket"></div>
+  </div>
+
+  <div class="controls">
+    <button onclick="openLetter()">OPEN</button>
+    <button onclick="closeLetter()">CLOSE</button>
+  </div>
+</div>
+
+<audio id="noS1" src="no1.mp3"></audio>
+<audio id="noS2" src="no2.mp3"></audio>
+<audio id="noS3" src="no3.mp3"></audio>
+<audio id="noS4" src="no4.mp3"></audio>
+<audio id="noS5" src="no5.mp3"></audio>
+<audio id="noS6" src="no6.mp3"></audio>
+<audio id="yesS" src="yes.mp3"></audio>
+
+<script>
+  let noCount = 0;
+  let yesScale = 1;
+  const sounds = ["noS1", "noS2", "noS3", "noS4", "noS5", "noS6"];
+  
+  // UPDATED MESSAGES
+  const texts = [
+    "Wait…. Are you sure??",
+    "Really…?",
+    "Think Again! 😢",
+    "Hahaha, Nice Try! 😂",
+    "No escape! 🤪",
+    "You can't escape love. 😎"
+  ];
+
+  function openLetter() { document.getElementById("env").classList.add("open"); }
+  function closeLetter() { document.getElementById("env").classList.remove("open"); }
+
+  function playS(id) {
+    const all = document.getElementsByTagName('audio');
+    for (let s of all) { s.pause(); s.currentTime = 0; }
+    let t = document.getElementById(id);
+    if(t) t.play().catch(e => {});
+  }
+
+  function noClick() {
+    if (noCount < 6) {
+      playS(sounds[noCount]);
+      document.getElementById("reaction").innerHTML = texts[noCount];
+      let g = document.getElementById("gif");
+      g.src = "no" + (noCount + 1) + ".gif?v=" + Date.now();
+      g.style.display = "block";
+
+      let bNo = document.getElementById("no");
+      let bYes = document.getElementById("yes");
+
+      yesScale += 0.08; /* Slightly faster growth */
+      bYes.style.transform = `scale(${yesScale})`;
+
+      bNo.style.position = "absolute";
+      bNo.style.left = (Math.random() * 60) + "px";
+      bNo.style.top = (Math.random() * 20) + "px";
+      
+      noCount++;
+    } else {
+      let bNo = document.getElementById("no");
+      let bYes = document.getElementById("yes");
+      bNo.style.transition = "all 0.6s ease-in";
+      bNo.style.transform = "scale(0)";
+      bNo.style.opacity = "0";
+      setTimeout(() => { 
+        bNo.style.display = "none";
+        bYes.style.transform = "scale(1.3)";
+      }, 600);
+    }
+  }
+
+  function yesClick() {
+    document.getElementById("header-zone").style.display = "none";
+    document.getElementById("btn-group").style.display = "none";
+    
+    const reaction = document.getElementById("reaction");
+    reaction.innerHTML = "💖 Congrats on being my favorite one, my girlfriend, my soulmate, and everything that I can't disclose in words. Love You Forever!";
+    reaction.style.color = "#b38728";
+    reaction.style.fontSize = "13px";   
+    reaction.style.marginTop = "20px"; 
+    
+    let g = document.getElementById("gif");
+    g.src = "yes.gif?v=" + Date.now();
+    g.style.display = "block";
+    g.style.maxHeight = "150px"; 
+    playS("yesS");
+  }
+</script>
+</body>
+</html>
