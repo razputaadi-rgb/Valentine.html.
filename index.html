@@ -191,29 +191,5 @@
     playS("yesS");
   }
 </script>
- <script>
-let selectedOption = null;
-
-// YES button click
-document.getElementById("yes").addEventListener("click", function() {
-    selectedOption = "Yes";
-    alert("She selected: Yes 💖");
-});
-
-// NO button click
-document.getElementById("no").addEventListener("click", function() {
-    selectedOption = "No";
-    alert("She selected: No 😢");
-});
-
-// Function to check anytime
-function checkSelection() {
-    if (selectedOption) {
-        alert("Current selection: " + selectedOption);
-    } else {
-        alert("No option selected yet.");
-    }
-}
-</script>
 </body>
 </html>
