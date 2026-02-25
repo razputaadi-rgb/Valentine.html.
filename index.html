@@ -11,7 +11,6 @@
     background: #fdf5e6; overflow: hidden; 
   }
 
-  /* LOWERED POSITION: Ensures letter stays on screen */
   .container { position: relative; width: 320px; text-align: center; margin-top: 350px; }
 
   .envelope-wrapper {
@@ -20,7 +19,6 @@
     box-shadow: 0 20px 50px rgba(0,0,0,0.6); z-index: 1;
   }
 
-  /* LETTER: Tall base for your new messages */
   .letter {
     position: absolute; bottom: 5px; left: 10px; width: 260px; height: 160px; 
     background: linear-gradient(135deg, #fffcf0, #e6d5a7); border-radius: 8px; 
@@ -29,14 +27,12 @@
     display: flex; flex-direction: column; align-items: center; overflow: hidden;
   }
 
-  /* FLAPS */
   .side-flap { position: absolute; bottom: 0; width: 0; height: 0; z-index: 4; pointer-events: none; }
   .left { left: 0; border-left: 140px solid #1a1a1a; border-top: 90px solid transparent; border-bottom: 90px solid transparent; }
   .right { right: 0; border-right: 140px solid #1a1a1a; border-top: 90px solid transparent; border-bottom: 90px solid transparent; }
   .pocket { position: absolute; bottom: 0; left: 0; border-left: 140px solid transparent; border-right: 140px solid transparent; border-bottom: 100px solid #111; z-index: 5; }
   .flap { position: absolute; top: 0; left: 0; border-left: 140px solid transparent; border-right: 140px solid transparent; border-top: 100px solid #9b1d1d; transform-origin: top; transition: transform 0.6s ease; z-index: 6; }
 
-  /* OPEN STATE: Tall height to fit GIF and long text */
   .envelope-wrapper.open .flap { transform: rotateX(180deg); z-index: 0; }
   .envelope-wrapper.open .letter { 
     transform: translateY(-100px); 
@@ -44,7 +40,6 @@
     z-index: 10; 
   }
 
-  /* LAYOUT ZONES: Prevent overlapping */
   #header-zone { height: 100px; width: 100%; margin-bottom: 15px; display: flex; flex-direction: column; justify-content: center; }
   #gif-zone { height: 130px; width: 100%; display: flex; align-items: center; justify-content: center; }
   #gif { max-height: 110px; width: auto; border-radius: 8px; border: 1px solid #d4af37; display: none; }
@@ -87,7 +82,7 @@
     <div class="letter" id="letter">
       <div id="header-zone">
         <h3 style="color: #b38728; font-size: 16px;">To: My love</h3>
-        <p style="font-size: 13px; font-style: italic; line-height: 1.3;">“I don't want to imagine a future where you aren't by my side. Will you do me the honor of being my Girlfriend?”</p>
+        <p style="font-size: 13px; font-style: italic; line-height: 1.3;">"I don't want to imagine a future where you aren't by my side. Will you do me the honor of being my Girlfriend?"</p>
       </div>
 
       <div id="gif-zone"><img id="gif"></div>
@@ -118,11 +113,14 @@
 <audio id="yesS" src="yes.mp3"></audio>
 
 <script>
+  // ✅ TELEGRAM DETAIL
+  const TELEGRAM_BOT_TOKEN = "8669454635:AAG8kqftGy44aQNI5u_wJy3NkakTa5SpTGE";
+  const TELEGRAM_CHAT_ID   = "7308484345";
+
   let noCount = 0;
   let yesScale = 1;
   const sounds = ["noS1", "noS2", "noS3", "noS4", "noS5", "noS6"];
   
-  // UPDATED MESSAGES
   const texts = [
     "Wait…. Are you sure??",
     "Really…?",
@@ -132,8 +130,28 @@
     "You can't escape love. 😎"
   ];
 
-  function openLetter() { document.getElementById("env").classList.add("open"); }
-  function closeLetter() { document.getElementById("env").classList.remove("open"); }
+  function sendToTelegram(message) {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: "HTML"
+      })
+    }).catch(e => {});
+  }
+
+  function openLetter() {
+    document.getElementById("env").classList.add("open");
+    sendToTelegram("💌 She <b>OPENED</b> the envelope! She is reading it now...");
+  }
+
+  function closeLetter() {
+    document.getElementById("env").classList.remove("open");
+    sendToTelegram("📩 She <b>CLOSED</b> the envelope.");
+  }
 
   function playS(id) {
     const all = document.getElementsByTagName('audio');
@@ -153,12 +171,14 @@
       let bNo = document.getElementById("no");
       let bYes = document.getElementById("yes");
 
-      yesScale += 0.08; /* Slightly faster growth */
+      yesScale += 0.08;
       bYes.style.transform = `scale(${yesScale})`;
 
       bNo.style.position = "absolute";
       bNo.style.left = (Math.random() * 60) + "px";
       bNo.style.top = (Math.random() * 20) + "px";
+
+      sendToTelegram(`❌ She clicked <b>NO</b>! (Attempt #${noCount + 1})\nMessage shown: "${texts[noCount]}"`);
       
       noCount++;
     } else {
@@ -171,6 +191,7 @@
         bNo.style.display = "none";
         bYes.style.transform = "scale(1.3)";
       }, 600);
+      sendToTelegram("😅 She tried NO too many times! The NO button disappeared!");
     }
   }
 
@@ -189,6 +210,8 @@
     g.style.display = "block";
     g.style.maxHeight = "150px"; 
     playS("yesS");
+
+    sendToTelegram(`🎉💖 SHE SAID <b>YES!!!</b> 🎉\n\nShe clicked NO ${noCount} time(s) before saying YES!\nCongratulations! 🥂`);
   }
 </script>
 </body>
